@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import Navigation from './Navigation';
-import { casesApi, attendanceApi } from '../services/api';
+import { casesApi } from '../services/api';
 import type { CaseStats } from '../types';
 
 const Reports: React.FC = () => {

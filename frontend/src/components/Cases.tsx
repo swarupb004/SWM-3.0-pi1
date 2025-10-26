@@ -7,7 +7,6 @@ const Cases: React.FC = () => {
   const [cases, setCases] = useState<Case[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   const [showModal, setShowModal] = useState<boolean>(false);
-  const [selectedCase, setSelectedCase] = useState<Case | null>(null);
   const [filters, setFilters] = useState({
     status: '',
     priority: '',

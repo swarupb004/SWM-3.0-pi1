@@ -181,7 +181,7 @@ export const exportCasesToCSV = async (req: AuthRequest, res: Response) => {
   }
 };
 
-export const getImportTemplate = async (req: AuthRequest, res: Response) => {
+export const getImportTemplate = async (_req: AuthRequest, res: Response) => {
   try {
     const template = `case_number,customer_name,customer_email,customer_phone,case_type,priority,description,status
 CASE001,John Doe,john@example.com,123-456-7890,Technical Support,high,Computer not starting,open

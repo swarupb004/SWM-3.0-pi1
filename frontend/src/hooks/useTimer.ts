@@ -19,7 +19,7 @@ export const useTimer = (options: UseTimerOptions = {}): UseTimerReturn => {
   const { startTime, autoStart = false, onTick } = options;
   const [elapsed, setElapsed] = useState<number>(0);
   const [isRunning, setIsRunning] = useState<boolean>(autoStart);
-  const intervalRef = useRef<NodeJS.Timeout | null>(null);
+  const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const startTimeRef = useRef<Date | null>(null);
 
   useEffect(() => {
