@@ -2,6 +2,8 @@
 
 A complete Business Process Outsourcing (BPO) tracking application for managing workforce attendance and customer support cases.
 
+**Available as Web App and Windows Desktop Application**
+
 ## Overview
 
 BPO Tracker is a full-stack application that helps manage:
@@ -10,6 +12,20 @@ BPO Tracker is a full-stack application that helps manage:
 - **Team Management**: Monitor team performance and attendance
 - **Bulk Operations**: Import/export cases via CSV
 - **Analytics**: Generate reports and statistics
+
+## Deployment Options
+
+### Web Application
+Browser-based application accessible from any device with modern web browser.
+
+### Desktop Application (Windows)
+Native Windows executable with:
+- **Local-first storage**: SQLite database saved to OneDrive/local drive
+- **Offline capability**: Work without internet, auto-sync when connected
+- **Keyboard shortcuts**: Ctrl+Shift+C to start case, E to close
+- **Floating drawer**: Movable, resizable case entry window
+- **System tray**: Background operation with tray icon
+- See `desktop/README.md` for desktop-specific documentation
 
 ## Technology Stack
 
@@ -21,13 +37,20 @@ BPO Tracker is a full-stack application that helps manage:
 - CSV parsing with csv-parse
 - Bcrypt for password hashing
 
-### Frontend
+### Frontend (Web)
 - React 18 with TypeScript
 - Vite for build tooling
 - React Router for navigation
 - Axios for API communication
 - Custom hooks (useTimer)
 - Responsive CSS
+
+### Desktop
+- Electron framework
+- SQLite (better-sqlite3) for local storage
+- Automatic sync with PostgreSQL server
+- electron-store for settings
+- electron-builder for Windows installer
 
 ## Features
 
@@ -79,19 +102,34 @@ SWM-3.0-pi1/
 │   ├── tsconfig.json
 │   └── README.md
 │
-└── frontend/               # Frontend application
+├── frontend/               # Frontend web application
+│   ├── src/
+│   │   ├── components/     # React components
+│   │   ├── hooks/          # Custom hooks
+│   │   ├── services/       # API client
+│   │   ├── styles/         # CSS styles
+│   │   ├── types/          # TypeScript types
+│   │   ├── App.tsx         # Main app
+│   │   └── main.tsx        # Entry point
+│   ├── index.html
+│   ├── vite.config.mts
+│   ├── package.json
+│   ├── tsconfig.json
+│   └── README.md
+│
+└── desktop/                # Desktop application (Windows)
     ├── src/
-    │   ├── components/     # React components
-    │   ├── hooks/          # Custom hooks
-    │   ├── services/       # API client
-    │   ├── styles/         # CSS styles
-    │   ├── types/          # TypeScript types
-    │   ├── App.tsx         # Main app
-    │   └── main.tsx        # Entry point
-    ├── index.html
-    ├── vite.config.mts
+    │   ├── main/           # Electron main process
+    │   │   ├── main.ts     # Application entry
+    │   │   ├── database.ts # SQLite manager
+    │   │   └── sync.ts     # Server sync logic
+    │   ├── preload/        # IPC bridge
+    │   │   └── preload.ts  # Secure API exposure
+    │   └── renderer/       # React UI
+    │       └── components/ # Desktop-specific components
+    ├── assets/             # Icons and resources
     ├── package.json
-    ├── tsconfig.json
+    ├── tsconfig.main.json
     └── README.md
 ```
 
@@ -148,6 +186,24 @@ curl -X POST http://localhost:3000/api/auth/register \
 ```
 
 Then login at `http://localhost:5173/login`
+
+### 5. Desktop App Setup (Optional)
+
+For Windows desktop application:
+
+```bash
+cd desktop
+npm install
+npm run dev
+```
+
+Or build Windows installer:
+
+```bash
+npm run package:win
+```
+
+The installer will be in `desktop/release/`. See `desktop/README.md` for full desktop documentation.
 
 ## API Endpoints
 

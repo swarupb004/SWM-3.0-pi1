@@ -40,3 +40,12 @@ coverage/
 tmp/
 temp/
 *.tmp
+
+# Electron / Desktop
+desktop/release/
+desktop/out/
+*.exe
+*.dmg
+*.AppImage
+*.deb
+*.rpm
