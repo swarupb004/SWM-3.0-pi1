@@ -1,10 +1,11 @@
-import Database from 'better-sqlite3';
+import initSqlJs, { Database as SqlJsDatabase } from 'sql.js';
 import * as path from 'path';
 import * as fs from 'fs';
 
 export class DatabaseManager {
-  private db: Database.Database;
+  private db: SqlJsDatabase | null = null;
   private dbPath: string;
+  private SQL: any = null;
 
   constructor(storagePath: string) {
     // Ensure directory exists
@@ -13,13 +14,41 @@ export class DatabaseManager {
     }
 
     this.dbPath = path.join(storagePath, 'bpo-tracker.db');
-    this.db = new Database(this.dbPath);
-    this.db.pragma('journal_mode = WAL'); // Better performance for concurrent access
+  }
+
+  private async initializeSqlJs() {
+    if (!this.SQL) {
+      this.SQL = await initSqlJs({
+        locateFile: (file: string) => {
+          // In production, the wasm file should be in the same directory as the compiled JS
+          return path.join(__dirname, '../../node_modules/sql.js/dist/', file);
+        }
+      });
+    }
+  }
+
+  private loadDatabase() {
+    if (fs.existsSync(this.dbPath)) {
+      const buffer = fs.readFileSync(this.dbPath);
+      this.db = new this.SQL.Database(new Uint8Array(buffer));
+    } else {
+      this.db = new this.SQL.Database();
+    }
+  }
+
+  private saveDatabase() {
+    if (this.db) {
+      const data = this.db.export();
+      fs.writeFileSync(this.dbPath, data);
+    }
   }
 
   async initialize() {
+    await this.initializeSqlJs();
+    this.loadDatabase();
+
     // Create tables
-    this.db.exec(`
+    this.db!.run(`
       CREATE TABLE IF NOT EXISTS users (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         username TEXT UNIQUE NOT NULL,
@@ -99,28 +128,50 @@ export class DatabaseManager {
       CREATE INDEX IF NOT EXISTS idx_sync_queue_pending ON sync_queue(table_name, record_id) WHERE synced = 0;
     `);
 
+    this.saveDatabase();
     console.log('Database initialized at:', this.dbPath);
   }
 
   query(sql: string, params: any[] = []): any[] {
+    if (!this.db) throw new Error('Database not initialized');
     const stmt = this.db.prepare(sql);
-    return stmt.all(...params);
+    if (params.length > 0) {
+      stmt.bind(params);
+    }
+    
+    const results: any[] = [];
+    while (stmt.step()) {
+      const row = stmt.getAsObject();
+      results.push(row);
+    }
+    stmt.free();
+    return results;
   }
 
   execute(sql: string, params: any[] = []): any {
-    const stmt = this.db.prepare(sql);
-    return stmt.run(...params);
+    if (!this.db) throw new Error('Database not initialized');
+    this.db.run(sql, params);
+    this.saveDatabase();
+    
+    // Get last insert rowid and changes count
+    const lastIdResult = this.db.exec("SELECT last_insert_rowid() as lastInsertRowid");
+    const changesResult = this.db.exec("SELECT changes() as changes");
+    
+    return {
+      lastInsertRowid: lastIdResult[0]?.values[0]?.[0] || null,
+      changes: changesResult[0]?.values[0]?.[0] || 0
+    };
   }
 
   // Case operations
   async createCase(caseData: any) {
-    const stmt = this.db.prepare(`
+    if (!this.db) throw new Error('Database not initialized');
+    
+    const result = this.execute(`
       INSERT INTO cases (case_number, customer_name, customer_email, customer_phone, 
                         case_type, priority, description, assigned_to, status)
       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
-    `);
-
-    const result = stmt.run(
+    `, [
       caseData.case_number,
       caseData.customer_name,
       caseData.customer_email,
@@ -130,7 +181,7 @@ export class DatabaseManager {
       caseData.description,
       caseData.assigned_to,
       'open'
-    );
+    ]);
 
     // Add to case history
     this.addCaseHistory(result.lastInsertRowid as number, caseData.assigned_to, 'Case created', caseData.description);
@@ -139,6 +190,8 @@ export class DatabaseManager {
   }
 
   async updateCase(id: number, caseData: any) {
+    if (!this.db) throw new Error('Database not initialized');
+    
     const updates: string[] = [];
     const params: any[] = [];
 
@@ -154,8 +207,7 @@ export class DatabaseManager {
     params.push(id);
 
     const sql = `UPDATE cases SET ${updates.join(', ')} WHERE id = ?`;
-    const stmt = this.db.prepare(sql);
-    stmt.run(...params);
+    this.execute(sql, params);
 
     this.addCaseHistory(id, caseData.user_id, 'Case updated', JSON.stringify(caseData));
 
@@ -163,96 +215,116 @@ export class DatabaseManager {
   }
 
   async closeCase(id: number) {
-    const stmt = this.db.prepare(`
+    if (!this.db) throw new Error('Database not initialized');
+    
+    this.execute(`
       UPDATE cases 
       SET status = 'closed', 
           resolved_at = CURRENT_TIMESTAMP,
           updated_at = CURRENT_TIMESTAMP,
           synced = 0
       WHERE id = ?
-    `);
+    `, [id]);
 
-    stmt.run(id);
     this.addCaseHistory(id, null, 'Case closed', null);
 
     return { id, status: 'closed' };
   }
 
   async getCurrentCase() {
-    const stmt = this.db.prepare(`
+    if (!this.db) throw new Error('Database not initialized');
+    
+    const results = this.query(`
       SELECT * FROM cases 
       WHERE status IN ('open', 'in_progress')
       ORDER BY created_at DESC 
       LIMIT 1
     `);
 
-    return stmt.get();
+    return results.length > 0 ? results[0] : null;
   }
 
   private addCaseHistory(caseId: number, userId: number | null, action: string, notes: string | null) {
-    const stmt = this.db.prepare(`
+    if (!this.db) throw new Error('Database not initialized');
+    
+    this.execute(`
       INSERT INTO case_history (case_id, user_id, action, notes)
       VALUES (?, ?, ?, ?)
-    `);
-
-    stmt.run(caseId, userId, action, notes);
+    `, [caseId, userId, action, notes]);
   }
 
   // Attendance operations
   async checkIn() {
+    if (!this.db) throw new Error('Database not initialized');
+    
     const today = new Date().toISOString().split('T')[0];
     const userId = 1; // Get from current user session
 
-    const stmt = this.db.prepare(`
+    const result = this.execute(`
       INSERT INTO attendance (user_id, check_in, date, status)
       VALUES (?, CURRENT_TIMESTAMP, ?, 'active')
-    `);
-
-    const result = stmt.run(userId, today);
+    `, [userId, today]);
 
     return { id: result.lastInsertRowid, user_id: userId, check_in: new Date().toISOString() };
   }
 
   async checkOut() {
+    if (!this.db) throw new Error('Database not initialized');
+    
     const today = new Date().toISOString().split('T')[0];
     const userId = 1;
 
-    const stmt = this.db.prepare(`
+    // First get the attendance record id
+    const attendanceRecords = this.query(`
+      SELECT id FROM attendance
+      WHERE user_id = ? AND date = ? AND check_out IS NULL
+      LIMIT 1
+    `, [userId, today]);
+
+    if (attendanceRecords.length === 0) {
+      throw new Error('No active attendance record found');
+    }
+
+    const attendanceId = attendanceRecords[0].id;
+
+    this.execute(`
       UPDATE attendance
       SET check_out = CURRENT_TIMESTAMP,
           status = 'completed',
           updated_at = CURRENT_TIMESTAMP,
           synced = 0
-      WHERE user_id = ? AND date = ? AND check_out IS NULL
-    `);
+      WHERE id = ?
+    `, [attendanceId]);
 
-    stmt.run(userId, today);
-
-    return { user_id: userId, check_out: new Date().toISOString() };
+    return { id: attendanceId, user_id: userId, check_out: new Date().toISOString() };
   }
 
   // Sync operations
   markAsSynced(tableName: string, id: number, serverId: number) {
-    const stmt = this.db.prepare(`
+    if (!this.db) throw new Error('Database not initialized');
+    
+    this.execute(`
       UPDATE ${tableName}
       SET synced = 1, server_id = ?
       WHERE id = ?
-    `);
-
-    stmt.run(serverId, id);
+    `, [serverId, id]);
   }
 
   getUnsyncedRecords(tableName: string, limit: number = 100) {
-    const stmt = this.db.prepare(`
+    if (!this.db) throw new Error('Database not initialized');
+    
+    return this.query(`
       SELECT * FROM ${tableName}
       WHERE synced = 0
       LIMIT ?
-    `);
-
-    return stmt.all(limit);
+    `, [limit]);
   }
 
   close() {
-    this.db.close();
+    if (this.db) {
+      this.saveDatabase();
+      this.db.close();
+      this.db = null;
+    }
   }
 }

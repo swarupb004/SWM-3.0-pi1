@@ -10,6 +10,7 @@ let drawerWindow: BrowserWindow | null = null;
 let tray: Tray | null = null;
 let dbManager: DatabaseManager;
 let syncManager: SyncManager;
+let isQuitting = false;
 
 // Get OneDrive path or fallback to local AppData
 function getStoragePath(): string {
@@ -47,7 +48,7 @@ function createMainWindow() {
 
   // Minimize to tray instead of closing
   mainWindow.on('close', (event) => {
-    if (!app.isQuitting) {
+    if (!isQuitting) {
       event.preventDefault();
       mainWindow?.hide();
     }
@@ -114,7 +115,7 @@ function createTray() {
     {
       label: 'Quit',
       click: () => {
-        app.isQuitting = true;
+        isQuitting = true;
         app.quit();
       }
     }

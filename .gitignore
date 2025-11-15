@@ -8,6 +8,9 @@ pnpm-lock.yaml
 dist/
 build/
 *.tsbuildinfo
+# Compiled JavaScript files in src directories
+**/src/**/*.js
+**/src/**/*.js.map
 
 # Environment variables
 .env
