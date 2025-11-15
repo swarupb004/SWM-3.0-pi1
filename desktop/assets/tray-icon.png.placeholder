@@ -1,0 +1,11 @@
+# Placeholder for tray-icon.png
+
+This file should contain the system tray icon in .png format.
+
+Recommended size: 16x16 or 32x32 pixels
+Format: PNG with transparency
+
+To create a tray icon:
+1. Design a simple, recognizable icon
+2. Save as PNG with transparent background
+3. Replace this placeholder with the actual tray-icon.png file
