@@ -20,8 +20,17 @@ export class DatabaseManager {
     if (!this.SQL) {
       this.SQL = await initSqlJs({
         locateFile: (file: string) => {
-          // In production, the wasm file should be in the same directory as the compiled JS
-          return path.join(__dirname, '../../node_modules/sql.js/dist/', file);
+          // In Electron, we need to find the wasm file in node_modules
+          // The __dirname will be in dist/main after compilation
+          const isDev = process.env.NODE_ENV === 'development';
+          if (isDev) {
+            // In development, use the direct path to node_modules
+            return path.join(__dirname, '../../node_modules/sql.js/dist/', file);
+          } else {
+            // In production (after electron-builder packages), use app.asar or resources
+            const { app } = require('electron');
+            return path.join(app.getAppPath(), 'node_modules/sql.js/dist/', file);
+          }
         }
       });
     }

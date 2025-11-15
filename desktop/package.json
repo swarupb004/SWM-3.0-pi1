@@ -55,8 +55,11 @@
     },
     "files": [
       "dist/**/*",
-      "node_modules/sql.js/dist/*.wasm",
+      "node_modules/sql.js/dist/**/*",
       "package.json"
+    ],
+    "asarUnpack": [
+      "node_modules/sql.js/dist/*.wasm"
     ]
   }
 }
