@@ -21,7 +21,7 @@ Windows desktop application for BPO Tracker with local-first storage and automat
 ## Technology Stack
 
 - **Electron**: Desktop framework
-- **SQLite (better-sqlite3)**: Local database
+- **SQLite (sql.js)**: Local database
 - **React**: UI (reuses existing frontend components)
 - **TypeScript**: Type-safe development
 - **electron-store**: Settings persistence
