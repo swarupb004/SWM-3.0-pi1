@@ -9,7 +9,15 @@ interface StoreSchema {
     startCase?: string;
     closeCase?: string;
   };
-  [key: string]: any;
+  serverUrl?: string;
+  lastSync?: string;
+  userId?: number;
+  windowBounds?: {
+    x?: number;
+    y?: number;
+    width?: number;
+    height?: number;
+  };
 }
 
 const store = new Store<StoreSchema>();

@@ -28,7 +28,25 @@ const checkPackageVersions = (pkgPath, expectedPackages) => {
       const version = currentVersion.replace(/[\^~]/, '');
       const expected = minVersion.replace(/[\^~]/, '');
       
-      if (version >= expected) {
+      // Parse version components for proper comparison
+      const parseVersion = (v) => v.split('.').map(num => parseInt(num, 10));
+      const currentParts = parseVersion(version);
+      const expectedParts = parseVersion(expected);
+      
+      // Compare major, minor, patch in order
+      let isValid = false;
+      for (let i = 0; i < 3; i++) {
+        if (currentParts[i] > expectedParts[i]) {
+          isValid = true;
+          break;
+        } else if (currentParts[i] < expectedParts[i]) {
+          break;
+        }
+        // If equal, continue to next component
+        if (i === 2) isValid = true; // All components equal
+      }
+      
+      if (isValid) {
         console.log(`  ✅ ${name}: ${currentVersion}`);
       } else {
         console.log(`  ❌ ${name}: ${currentVersion} (expected >= ${minVersion})`);
