@@ -4,7 +4,23 @@ import { DatabaseManager } from './database';
 import { SyncManager } from './sync';
 import Store from 'electron-store';
 
-const store = new Store();
+interface StoreSchema {
+  shortcuts?: {
+    startCase?: string;
+    closeCase?: string;
+  };
+  serverUrl?: string;
+  lastSync?: string;
+  userId?: number;
+  windowBounds?: {
+    x?: number;
+    y?: number;
+    width?: number;
+    height?: number;
+  };
+}
+
+const store = new Store<StoreSchema>();
 let mainWindow: BrowserWindow | null = null;
 let drawerWindow: BrowserWindow | null = null;
 let tray: Tray | null = null;
