@@ -47,7 +47,7 @@ Native Windows executable with:
 
 ### Desktop
 - Electron framework
-- SQLite (better-sqlite3) for local storage
+- SQLite (sql.js) for local storage
 - Automatic sync with PostgreSQL server
 - electron-store for settings
 - electron-builder for Windows installer
