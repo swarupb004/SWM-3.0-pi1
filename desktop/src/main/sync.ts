@@ -184,6 +184,99 @@ export class SyncManager {
     };
   }
 
+  // Download allocated cases from server
+  async downloadAllocatedCases(): Promise<{ success: boolean; message: string; imported?: number; updated?: number; conflicts?: any[] }> {
+    if (!this.authToken) {
+      throw new Error('Not authenticated with server');
+    }
+
+    const headers = {
+      'Authorization': `Bearer ${this.authToken}`,
+      'Content-Type': 'application/json'
+    };
+
+    try {
+      // Get allocated cases from server
+      const response = await axios.get(`${this.serverUrl}/cases/allocated`, { headers });
+      const { cases } = response.data;
+
+      if (!cases || cases.length === 0) {
+        return { success: true, message: 'No allocated cases found', imported: 0, updated: 0, conflicts: [] };
+      }
+
+      // Import cases to local database
+      const result = await this.dbManager.importCasesFromServer(cases);
+
+      console.log('Downloaded allocated cases from server:', result);
+      return {
+        success: true,
+        message: `Imported ${result.imported} new cases, updated ${result.updated} existing cases`,
+        imported: result.imported,
+        updated: result.updated,
+        conflicts: result.errors
+      };
+    } catch (error: any) {
+      console.error('Download allocated cases error:', error);
+      return {
+        success: false,
+        message: error.response?.data?.error || error.message,
+        conflicts: []
+      };
+    }
+  }
+
+  // Check case availability before booking out (to detect conflicts)
+  async checkCaseAvailability(caseId: number): Promise<{ available: boolean; message: string; conflict?: any }> {
+    if (!this.authToken) {
+      return { available: false, message: 'Not authenticated with server' };
+    }
+
+    const headers = {
+      'Authorization': `Bearer ${this.authToken}`,
+      'Content-Type': 'application/json'
+    };
+
+    try {
+      const response = await axios.get(`${this.serverUrl}/cases/${caseId}/availability`, { headers });
+      return response.data;
+    } catch (error: any) {
+      console.error('Check availability error:', error);
+      return {
+        available: false,
+        message: error.response?.data?.error || 'Unable to check availability',
+        conflict: error.response?.data
+      };
+    }
+  }
+
+  // Book out a case on the server
+  async bookOutOnServer(caseId: number): Promise<{ success: boolean; message: string; conflict?: boolean; action_required?: string }> {
+    if (!this.authToken) {
+      return { success: false, message: 'Not authenticated with server' };
+    }
+
+    const headers = {
+      'Authorization': `Bearer ${this.authToken}`,
+      'Content-Type': 'application/json'
+    };
+
+    try {
+      const response = await axios.post(`${this.serverUrl}/cases/${caseId}/book-out`, {}, { headers });
+      return { success: true, message: response.data.message };
+    } catch (error: any) {
+      if (error.response?.status === 409) {
+        // Conflict - case already booked out
+        return {
+          success: false,
+          message: error.response.data.message,
+          conflict: true,
+          action_required: error.response.data.action_required
+        };
+      }
+      return { success: false, message: error.response?.data?.error || error.message };
+    }
+  }
+
   // Download data from server to local (for initial setup or recovery)
   async downloadFromServer() {
     if (!this.authToken) {
@@ -211,8 +304,8 @@ export class SyncManager {
           // Insert new
           this.dbManager.execute(`
             INSERT INTO cases (case_number, customer_name, customer_email, customer_phone,
-                              case_type, priority, status, description, server_id, synced)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 1)
+                              case_type, priority, status, description, booked_out_at, booked_out_by, server_id, synced)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 1)
           `, [
             caseData.case_number,
             caseData.customer_name,
@@ -222,6 +315,8 @@ export class SyncManager {
             caseData.priority,
             caseData.status,
             caseData.description,
+            caseData.booked_out_at,
+            caseData.booked_out_by,
             caseData.id
           ]);
         }

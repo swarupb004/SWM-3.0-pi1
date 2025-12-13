@@ -9,6 +9,7 @@ A complete Business Process Outsourcing (BPO) tracking application for managing 
 BPO Tracker is a full-stack application that helps manage:
 - **Employee Attendance**: Track check-in/check-out times, breaks, and work hours
 - **Case Management**: Create, assign, and track customer support cases
+- **Case Book-out**: Book out cases to work on them, with conflict detection
 - **Team Management**: Monitor team performance and attendance
 - **Bulk Operations**: Import/export cases via CSV
 - **Analytics**: Generate reports and statistics
@@ -22,6 +23,8 @@ Browser-based application accessible from any device with modern web browser.
 Native Windows executable with:
 - **Local-first storage**: SQLite database saved to OneDrive/local drive
 - **Offline capability**: Work without internet, auto-sync when connected
+- **Import allocated cases**: Download all assigned cases at once for offline work
+- **Book-out one by one**: Work through cases with conflict detection
 - **Keyboard shortcuts**: Ctrl+Shift+C to start case, E to close
 - **Floating drawer**: Movable, resizable case entry window
 - **System tray**: Background operation with tray icon
@@ -32,7 +35,7 @@ Native Windows executable with:
 ### Backend
 - TypeScript
 - Express.js
-- PostgreSQL
+- PostgreSQL or MySQL (configurable)
 - JWT Authentication
 - CSV parsing with csv-parse
 - Bcrypt for password hashing
@@ -47,8 +50,8 @@ Native Windows executable with:
 
 ### Desktop
 - Electron framework
-- SQLite (better-sqlite3) for local storage
-- Automatic sync with PostgreSQL server
+- SQLite (sql.js) for local storage
+- Automatic sync with PostgreSQL/MySQL server
 - electron-store for settings
 - electron-builder for Windows installer
 
@@ -69,9 +72,17 @@ Native Windows executable with:
 ### Case Control
 - Create and assign cases
 - Update case status and priority
+- **Book-out cases**: Reserve cases for work with conflict detection
+- **Release cases**: Return cases to the pool if not needed
 - Case history tracking
 - Search and filter functionality
 - Case statistics
+
+### Case Book-out & Sync
+- **Conflict Detection**: When attempting to book out a case that's already booked by another user, the system shows a clear message
+- **Action Required**: Users are prompted to add a new case or select a different one
+- **Import Allocated Cases**: Agents can import all their allocated cases to the local app at once
+- **Book Out Randomly**: Work through cases one by one in any order
 
 ### Bulk Import/Export
 - CSV import with validation
@@ -136,16 +147,21 @@ SWM-3.0-pi1/
 ## Prerequisites
 
 - Node.js 18 or higher
-- PostgreSQL 12 or higher
+- PostgreSQL 12 or higher OR MySQL 8.0 or higher
 - npm or yarn
 
 ## Quick Start
 
 ### 1. Database Setup
 
-Create a PostgreSQL database:
+**PostgreSQL (Default):**
 ```bash
 createdb bpo_tracker
+```
+
+**MySQL (Alternative):**
+```sql
+CREATE DATABASE bpo_tracker;
 ```
 
 ### 2. Backend Setup
@@ -155,6 +171,7 @@ cd backend
 npm install
 cp .env.example .env
 # Edit .env with your database credentials
+# Set DB_TYPE=postgresql (default) or DB_TYPE=mysql
 npm run dev
 ```
 
@@ -229,7 +246,11 @@ The installer will be in `desktop/release/`. See `desktop/README.md` for full de
 - `DELETE /api/cases/:id` - Delete case
 - `GET /api/cases/:id/history` - Get case history
 - `GET /api/cases/my-cases` - Get my cases
+- `GET /api/cases/allocated` - Get allocated cases available for booking out
 - `GET /api/cases/stats` - Get statistics
+- `POST /api/cases/:id/book-out` - Book out a case (marks case as in-progress)
+- `POST /api/cases/:id/release` - Release a booked out case
+- `GET /api/cases/:id/availability` - Check if case is available for booking out
 
 ### Import/Export
 - `POST /api/import/import` - Import CSV
@@ -279,10 +300,11 @@ Download the template from the Import page in the application.
 ### Backend (.env)
 ```
 PORT=3000
+DB_TYPE=postgresql           # 'postgresql' (default) or 'mysql'
 DB_HOST=localhost
-DB_PORT=5432
+DB_PORT=5432                 # 5432 for PostgreSQL, 3306 for MySQL
 DB_NAME=bpo_tracker
-DB_USER=postgres
+DB_USER=postgres             # 'postgres' for PostgreSQL, 'root' for MySQL
 DB_PASSWORD=your_password
 JWT_SECRET=your_secret_key
 JWT_EXPIRES_IN=24h
@@ -298,7 +320,7 @@ VITE_API_URL=http://localhost:3000/api
 
 - **users**: User accounts and roles
 - **attendance**: Attendance records with check-in/out and breaks
-- **cases**: Customer support cases
+- **cases**: Customer support cases (includes book-out fields)
 - **case_history**: Audit trail for case changes
 
 ## Security Features
