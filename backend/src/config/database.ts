@@ -251,11 +251,22 @@ async function initializeMySQLSchema() {
   `);
 
   // Add book-out columns if they don't exist (for existing installations)
+  // Note: Foreign key constraints should already exist from CREATE TABLE for new installations
   try {
     await query(`ALTER TABLE cases ADD COLUMN booked_out_at TIMESTAMP NULL`);
-    await query(`ALTER TABLE cases ADD COLUMN booked_out_by INT`);
   } catch (error) {
-    // Columns may already exist, ignore error
+    // Column may already exist, ignore error
+  }
+  try {
+    await query(`ALTER TABLE cases ADD COLUMN booked_out_by INT`);
+    // Add foreign key constraint for booked_out_by if column was just added
+    try {
+      await query(`ALTER TABLE cases ADD CONSTRAINT fk_cases_booked_out_by FOREIGN KEY (booked_out_by) REFERENCES users(id)`);
+    } catch (fkError) {
+      // Foreign key may already exist or column already existed
+    }
+  } catch (error) {
+    // Column may already exist, ignore error
   }
 
   // Case history table

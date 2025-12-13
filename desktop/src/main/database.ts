@@ -142,6 +142,10 @@ export class DatabaseManager {
     `);
 
     // Add book-out columns if they don't exist (for existing databases)
+    // Note: SQLite doesn't support adding foreign key constraints via ALTER TABLE.
+    // The foreign key is defined in CREATE TABLE for new databases.
+    // For existing databases, the column is added without the FK constraint,
+    // which is acceptable since SQLite FK enforcement is optional anyway.
     try {
       this.db!.run(`ALTER TABLE cases ADD COLUMN booked_out_at DATETIME`);
     } catch (e) {
