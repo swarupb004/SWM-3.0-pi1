@@ -12,6 +12,12 @@ contextBridge.exposeInMainWorld('electronAPI', {
   updateCase: (id: number, caseData: any) => ipcRenderer.invoke('case:update', id, caseData),
   closeCase: (id: number) => ipcRenderer.invoke('case:close', id),
   getCurrentCase: () => ipcRenderer.invoke('case:getCurrent'),
+  
+  // Book out operations
+  bookOutCase: (id: number, userId: number) => ipcRenderer.invoke('case:bookOut', id, userId),
+  releaseCase: (id: number, userId: number) => ipcRenderer.invoke('case:release', id, userId),
+  getAllocatedCases: (userId: number) => ipcRenderer.invoke('case:getAllocated', userId),
+  importCasesFromServer: () => ipcRenderer.invoke('case:importFromServer'),
 
   // Attendance operations
   checkIn: () => ipcRenderer.invoke('attendance:checkIn'),
@@ -20,6 +26,7 @@ contextBridge.exposeInMainWorld('electronAPI', {
   // Sync operations
   syncNow: () => ipcRenderer.invoke('sync:now'),
   getSyncStatus: () => ipcRenderer.invoke('sync:status'),
+  downloadAllocatedCases: () => ipcRenderer.invoke('sync:downloadCases'),
 
   // Settings
   getSetting: (key: string) => ipcRenderer.invoke('settings:get', key),
@@ -50,10 +57,15 @@ declare global {
       updateCase: (id: number, caseData: any) => Promise<any>;
       closeCase: (id: number) => Promise<any>;
       getCurrentCase: () => Promise<any>;
+      bookOutCase: (id: number, userId: number) => Promise<{ success: boolean; conflict?: boolean; message: string; action_required?: string }>;
+      releaseCase: (id: number, userId: number) => Promise<any>;
+      getAllocatedCases: (userId: number) => Promise<{ total: number; available: number; booked_out: number; cases: any[]; available_cases: any[]; booked_out_cases: any[] }>;
+      importCasesFromServer: () => Promise<{ success: boolean; message: string; imported?: number; updated?: number; conflicts?: any[] }>;
       checkIn: () => Promise<any>;
       checkOut: () => Promise<any>;
       syncNow: () => Promise<{ success: boolean; message: string }>;
       getSyncStatus: () => Promise<any>;
+      downloadAllocatedCases: () => Promise<{ success: boolean; message: string; imported?: number; updated?: number; conflicts?: any[] }>;
       getSetting: (key: string) => Promise<any>;
       setSetting: (key: string, value: any) => Promise<boolean>;
       copyToClipboard: (text: string) => Promise<boolean>;

@@ -8,6 +8,10 @@ import {
   getCaseHistory,
   getMyCases,
   getCaseStats,
+  bookOutCase,
+  releaseCase,
+  getAllocatedCases,
+  checkCaseAvailability,
 } from '../controllers/caseController';
 import { authenticateToken, authorizeRoles } from '../middleware/auth';
 
@@ -16,9 +20,13 @@ const router = express.Router();
 router.post('/', authenticateToken, createCase);
 router.get('/', authenticateToken, getCases);
 router.get('/my-cases', authenticateToken, getMyCases);
+router.get('/allocated', authenticateToken, getAllocatedCases);
 router.get('/stats', authenticateToken, getCaseStats);
 router.get('/:id', authenticateToken, getCase);
+router.get('/:id/availability', authenticateToken, checkCaseAvailability);
 router.put('/:id', authenticateToken, updateCase);
+router.post('/:id/book-out', authenticateToken, bookOutCase);
+router.post('/:id/release', authenticateToken, releaseCase);
 router.delete(
   '/:id',
   authenticateToken,

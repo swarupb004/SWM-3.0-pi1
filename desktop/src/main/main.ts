@@ -240,6 +240,29 @@ function setupIpcHandlers() {
     return dbManager.getCurrentCase();
   });
 
+  // Book out operations
+  ipcMain.handle('case:bookOut', async (event, id, userId) => {
+    const result = await dbManager.bookOutCase(id, userId);
+    if (result.success) {
+      syncManager.queueSync('case', id);
+    }
+    return result;
+  });
+
+  ipcMain.handle('case:release', async (event, id, userId) => {
+    const result = await dbManager.releaseCase(id, userId);
+    syncManager.queueSync('case', id);
+    return result;
+  });
+
+  ipcMain.handle('case:getAllocated', async (event, userId) => {
+    return dbManager.getAllocatedCases(userId);
+  });
+
+  ipcMain.handle('case:importFromServer', async () => {
+    return syncManager.downloadAllocatedCases();
+  });
+
   // Attendance operations
   ipcMain.handle('attendance:checkIn', async () => {
     const result = await dbManager.checkIn();
@@ -260,6 +283,10 @@ function setupIpcHandlers() {
 
   ipcMain.handle('sync:status', async () => {
     return syncManager.getStatus();
+  });
+
+  ipcMain.handle('sync:downloadCases', async () => {
+    return syncManager.downloadAllocatedCases();
   });
 
   // Settings
