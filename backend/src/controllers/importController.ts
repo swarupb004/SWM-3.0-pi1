@@ -160,7 +160,7 @@ export const exportCasesToCSV = async (req: AuthRequest, res: Response) => {
 
     let csv = headers.join(',') + '\n';
 
-    result.rows.forEach((row) => {
+    result.rows.forEach((row: any) => {
       const values = headers.map((header) => {
         const value = row[header] || '';
         // Escape commas and quotes
