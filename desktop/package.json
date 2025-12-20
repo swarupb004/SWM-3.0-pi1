@@ -24,10 +24,12 @@
   "devDependencies": {
     "@types/node": "^20.17.12",
     "@types/sql.js": "^1.4.9",
+    "@types/react": "^18.3.18",
+    "@types/react-dom": "^18.3.5",
     "@vitejs/plugin-react": "^4.3.4",
     "concurrently": "^9.1.2",
     "electron": "^38.7.1",
-    "electron-builder": "^26.3.0",
+    "electron-builder": "26.0.12",
     "typescript": "^5.7.3",
     "vite": "^6.0.7"
   },
@@ -35,6 +37,8 @@
     "axios": "^1.7.9",
     "electron-store": "^8.2.0",
     "electron-updater": "^6.6.2",
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1",
     "sql.js": "^1.13.0"
   },
   "build": {
