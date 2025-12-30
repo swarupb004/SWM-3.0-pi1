@@ -17,9 +17,13 @@ export class SyncManager {
     this.dbManager = dbManager;
   }
 
-  setServerConfig(url: string, token: string) {
-    this.serverUrl = url;
-    this.authToken = token;
+  setServerConfig(url: string, token?: string | null) {
+    if (url) {
+      this.serverUrl = url;
+    }
+    if (token !== undefined) {
+      this.authToken = token;
+    }
   }
 
   startPeriodicSync(intervalMs: number) {
