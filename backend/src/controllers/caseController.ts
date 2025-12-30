@@ -214,6 +214,8 @@ export const updateCase = async (req: AuthRequest, res: Response) => {
       params.push(status);
       if (status === 'resolved' || status === 'closed') {
         updates.push(`resolved_at = NOW()`);
+        updates.push(`booked_out_at = NULL`);
+        updates.push(`booked_out_by = NULL`);
       }
     }
     if (description !== undefined) {

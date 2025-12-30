@@ -10,6 +10,7 @@ interface StoreSchema {
     closeCase?: string;
   };
   serverUrl?: string;
+  authToken?: string;
   lastSync?: string;
   userId?: number;
   windowBounds?: {
@@ -181,6 +182,9 @@ app.on('ready', async () => {
 
   // Initialize sync manager
   syncManager = new SyncManager(dbManager);
+  const serverUrl = store.get('serverUrl', 'http://localhost:3000/api') as string;
+  const authToken = (store.get('authToken') as string | undefined) ?? null;
+  syncManager.setServerConfig(serverUrl, authToken);
   syncManager.startPeriodicSync(5 * 60 * 1000); // Sync every 5 minutes
 
   createMainWindow();
@@ -220,19 +224,22 @@ function setupIpcHandlers() {
   // Case operations
   ipcMain.handle('case:create', async (event, caseData) => {
     const result = await dbManager.createCase(caseData);
-    syncManager.queueSync('case', result.id);
+    syncManager.queueSync('cases', result.id);
     return result;
   });
 
   ipcMain.handle('case:update', async (event, id, caseData) => {
     const result = await dbManager.updateCase(id, caseData);
-    syncManager.queueSync('case', id);
+    syncManager.queueSync('cases', id);
     return result;
   });
 
   ipcMain.handle('case:close', async (event, id) => {
     const result = await dbManager.closeCase(id);
-    syncManager.queueSync('case', id);
+    syncManager.queueSync('cases', id);
+    syncManager.syncNow().catch((error: any) => {
+      console.error('Immediate sync after close failed:', error);
+    });
     return result;
   });
 
@@ -244,14 +251,14 @@ function setupIpcHandlers() {
   ipcMain.handle('case:bookOut', async (event, id, userId) => {
     const result = await dbManager.bookOutCase(id, userId);
     if (result.success) {
-      syncManager.queueSync('case', id);
+      syncManager.queueSync('cases', id);
     }
     return result;
   });
 
   ipcMain.handle('case:release', async (event, id, userId) => {
     const result = await dbManager.releaseCase(id, userId);
-    syncManager.queueSync('case', id);
+    syncManager.queueSync('cases', id);
     return result;
   });
 
@@ -301,6 +308,12 @@ function setupIpcHandlers() {
     if (key.startsWith('shortcuts.')) {
       globalShortcut.unregisterAll();
       registerGlobalShortcuts();
+    }
+
+    if (key === 'serverUrl' || key === 'authToken') {
+      const updatedServerUrl = store.get('serverUrl', 'http://localhost:3000/api') as string;
+      const updatedAuthToken = (store.get('authToken') as string | undefined) ?? null;
+      syncManager.setServerConfig(updatedServerUrl, updatedAuthToken);
     }
     
     return true;
