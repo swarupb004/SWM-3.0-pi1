@@ -183,7 +183,7 @@ app.on('ready', async () => {
   // Initialize sync manager
   syncManager = new SyncManager(dbManager);
   const serverUrl = store.get('serverUrl', 'http://localhost:3000/api') as string;
-  const authToken = (store.get('authToken') as string | undefined) || null;
+  const authToken = (store.get('authToken') as string | undefined) ?? null;
   syncManager.setServerConfig(serverUrl, authToken);
   syncManager.startPeriodicSync(5 * 60 * 1000); // Sync every 5 minutes
 
@@ -312,7 +312,7 @@ function setupIpcHandlers() {
 
     if (key === 'serverUrl' || key === 'authToken') {
       const updatedServerUrl = store.get('serverUrl', 'http://localhost:3000/api') as string;
-      const updatedAuthToken = (store.get('authToken') as string | undefined) || null;
+      const updatedAuthToken = (store.get('authToken') as string | undefined) ?? null;
       syncManager.setServerConfig(updatedServerUrl, updatedAuthToken);
     }
     

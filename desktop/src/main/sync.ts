@@ -22,7 +22,7 @@ export class SyncManager {
       this.serverUrl = url;
     }
     if (token !== undefined) {
-      this.authToken = token;
+      this.authToken = token ?? null;
     }
   }
 
