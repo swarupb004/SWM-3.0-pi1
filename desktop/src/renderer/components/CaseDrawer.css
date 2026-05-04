@@ -57,6 +57,94 @@
   overflow-y: auto;
 }
 
+.status-bar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px 16px;
+  padding: 10px 16px;
+  background: rgba(0, 0, 0, 0.18);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.status-item {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 90px;
+}
+
+.status-label {
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  opacity: 0.7;
+}
+
+.status-value {
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.status-sub {
+  font-size: 10px;
+  opacity: 0.7;
+}
+
+.status-sync {
+  min-width: 140px;
+}
+
+.status-conflict {
+  min-width: 110px;
+}
+
+.status-pill {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 2px 8px;
+  border-radius: 999px;
+  font-size: 10px;
+  font-weight: 600;
+  width: fit-content;
+}
+
+.status-pill-success {
+  background: rgba(76, 175, 80, 0.3);
+  color: #d5f9da;
+}
+
+.status-pill-warning {
+  background: rgba(255, 193, 7, 0.3);
+  color: #ffeaa7;
+}
+
+.status-pill-danger {
+  background: rgba(244, 67, 54, 0.35);
+  color: #ffd7d7;
+}
+
+.btn-mini {
+  border: none;
+  border-radius: 999px;
+  padding: 4px 10px;
+  font-size: 10px;
+  font-weight: 600;
+  color: #fff;
+  background: rgba(255, 255, 255, 0.2);
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.btn-mini:hover:not(:disabled) {
+  background: rgba(255, 255, 255, 0.3);
+}
+
+.btn-mini:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
 .message {
   padding: 10px;
   border-radius: 6px;

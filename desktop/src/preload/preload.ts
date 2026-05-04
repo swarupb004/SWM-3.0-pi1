@@ -22,6 +22,7 @@ contextBridge.exposeInMainWorld('electronAPI', {
   // Attendance operations
   checkIn: () => ipcRenderer.invoke('attendance:checkIn'),
   checkOut: () => ipcRenderer.invoke('attendance:checkOut'),
+  getTodayAttendance: () => ipcRenderer.invoke('attendance:getToday'),
 
   // Sync operations
   syncNow: () => ipcRenderer.invoke('sync:now'),
@@ -63,6 +64,7 @@ declare global {
       importCasesFromServer: () => Promise<{ success: boolean; message: string; imported?: number; updated?: number; conflicts?: any[] }>;
       checkIn: () => Promise<any>;
       checkOut: () => Promise<any>;
+      getTodayAttendance: () => Promise<any>;
       syncNow: () => Promise<{ success: boolean; message: string }>;
       getSyncStatus: () => Promise<any>;
       downloadAllocatedCases: () => Promise<{ success: boolean; message: string; imported?: number; updated?: number; conflicts?: any[] }>;

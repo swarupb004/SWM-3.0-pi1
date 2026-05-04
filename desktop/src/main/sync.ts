@@ -8,6 +8,8 @@ export class SyncManager {
   private isSyncing = false;
   private lastSyncTime: Date | null = null;
   private lastSyncStatus: 'success' | 'failed' | 'pending' = 'pending';
+  private lastSyncErrors: string[] = [];
+  private lastSyncMessage: string | null = null;
 
   // Server configuration - can be updated from settings
   private serverUrl: string = 'http://localhost:3000/api';
@@ -94,7 +96,9 @@ export class SyncManager {
       }
 
       this.lastSyncTime = new Date();
-      this.lastSyncStatus = results.failed === 0 ? 'success' : 'failed';
+       this.lastSyncStatus = results.failed === 0 ? 'success' : 'failed';
+       this.lastSyncErrors = results.errors;
+       this.lastSyncMessage = `Synced ${results.synced} records, ${results.failed} failed`;
 
       const duration = Date.now() - startTime;
       console.log(`Sync completed in ${duration}ms:`, results);
@@ -103,9 +107,11 @@ export class SyncManager {
         success: results.failed === 0,
         message: `Synced ${results.synced} records, ${results.failed} failed`
       };
-    } catch (error: any) {
+     } catch (error: any) {
       console.error('Sync error:', error);
       this.lastSyncStatus = 'failed';
+      this.lastSyncErrors = [error.message];
+      this.lastSyncMessage = error.message;
       return { success: false, message: error.message };
     } finally {
       this.isSyncing = false;
@@ -184,7 +190,9 @@ export class SyncManager {
       lastSyncTime: this.lastSyncTime,
       status: this.lastSyncStatus,
       isSyncing: this.isSyncing,
-      queueSize: Array.from(this.syncQueue.values()).reduce((sum, set) => sum + set.size, 0)
+      queueSize: Array.from(this.syncQueue.values()).reduce((sum, set) => sum + set.size, 0),
+      lastSyncErrors: this.lastSyncErrors,
+      lastSyncMessage: this.lastSyncMessage
     };
   }
 

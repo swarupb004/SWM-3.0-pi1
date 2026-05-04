@@ -215,7 +215,11 @@ export class DatabaseManager {
     // Add to case history
     this.addCaseHistory(result.lastInsertRowid as number, caseData.assigned_to, 'Case created', caseData.description);
 
-    return { id: result.lastInsertRowid, ...caseData };
+    const createdCase = this.query(`SELECT * FROM cases WHERE id = ?`, [
+      result.lastInsertRowid
+    ])[0];
+
+    return createdCase ?? { id: result.lastInsertRowid, ...caseData };
   }
 
   async updateCase(id: number, caseData: any) {
@@ -552,6 +556,23 @@ export class DatabaseManager {
     `, [attendanceId]);
 
     return { id: attendanceId, user_id: userId, check_out: new Date().toISOString() };
+  }
+
+  async getTodayAttendance() {
+    if (!this.db) throw new Error('Database not initialized');
+
+    const today = new Date().toISOString().split('T')[0];
+    const results = this.query(
+      `
+        SELECT * FROM attendance
+        WHERE date = ?
+        ORDER BY check_in DESC
+        LIMIT 1
+      `,
+      [today]
+    );
+
+    return results.length > 0 ? results[0] : null;
   }
 
   // Sync operations

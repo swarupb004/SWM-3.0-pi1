@@ -1,4 +1,4 @@
-import { app, BrowserWindow, globalShortcut, ipcMain, Menu, Tray } from 'electron';
+import { app, BrowserWindow, globalShortcut, ipcMain, Menu, Tray, screen } from 'electron';
 import * as path from 'path';
 import { DatabaseManager } from './database';
 import { SyncManager } from './sync';
@@ -73,9 +73,11 @@ function createMainWindow() {
 }
 
 function createDrawerWindow() {
+  const drawerWidth = 400;
+  const drawerHeight = 300;
   drawerWindow = new BrowserWindow({
-    width: 400,
-    height: 300,
+    width: drawerWidth,
+    height: drawerHeight,
     frame: false,
     transparent: false,
     alwaysOnTop: true,
@@ -89,10 +91,9 @@ function createDrawerWindow() {
   });
 
   // Position at center-top
-  const { screen } = require('electron');
   const primaryDisplay = screen.getPrimaryDisplay();
-  const { width } = primaryDisplay.workAreaSize;
-  drawerWindow.setPosition(Math.floor((width - 400) / 2), 50);
+  const { width, x, y } = primaryDisplay.workArea;
+  drawerWindow.setPosition(Math.floor(x + (width - drawerWidth) / 2), y);
 
   if (process.env.NODE_ENV === 'development') {
     drawerWindow.loadURL('http://localhost:5173/#/drawer');
@@ -281,6 +282,10 @@ function setupIpcHandlers() {
     const result = await dbManager.checkOut();
     syncManager.queueSync('attendance', result.id);
     return result;
+  });
+
+  ipcMain.handle('attendance:getToday', async () => {
+    return dbManager.getTodayAttendance();
   });
 
   // Sync operations
