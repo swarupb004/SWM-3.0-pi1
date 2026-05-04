@@ -35,7 +35,7 @@ const CaseDrawer: React.FC = () => {
     } finally {
       setIsLoading(false);
     }
-  }, []);
+  }, [handleCloseCase]);
 
   useEffect(() => {
     loadCurrentCase();
