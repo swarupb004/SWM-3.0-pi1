@@ -35,7 +35,7 @@ const CaseDrawer: React.FC = () => {
     } finally {
       setIsLoading(false);
     }
-  }, [handleCloseCase]);
+  }, []);
 
   useEffect(() => {
     loadCurrentCase();
@@ -65,7 +65,7 @@ const CaseDrawer: React.FC = () => {
       window.removeEventListener('offline', handleOffline);
       clearInterval(refreshInterval);
     };
-  }, []);
+  }, [handleCloseCase]);
 
   useEffect(() => {
     currentCaseRef.current = currentCase;
