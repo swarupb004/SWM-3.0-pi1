@@ -21,6 +21,8 @@ interface StoreSchema {
   };
 }
 
+const DRAWER_WIDTH = 400;
+const DRAWER_HEIGHT = 360;
 const store = new Store<StoreSchema>();
 let mainWindow: BrowserWindow | null = null;
 let drawerWindow: BrowserWindow | null = null;
@@ -28,8 +30,6 @@ let tray: Tray | null = null;
 let dbManager: DatabaseManager;
 let syncManager: SyncManager;
 let isQuitting = false;
-const DRAWER_WIDTH = 400;
-const DRAWER_HEIGHT = 360;
 
 // Get OneDrive path or fallback to local AppData
 function getStoragePath(): string {

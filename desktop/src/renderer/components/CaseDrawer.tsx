@@ -3,6 +3,9 @@ import './CaseDrawer.css';
 
 const DEFAULT_SYNC_INTERVAL_MS = 5 * 60 * 1000;
 const STATUS_REFRESH_INTERVAL_MS = 30 * 1000;
+const MESSAGE_DISPLAY_DURATION_MS = 3000;
+const COPY_MESSAGE_DURATION_MS = 2000;
+const CONFLICT_KEYWORDS = ['conflict', '409'];
 
 const CaseDrawer: React.FC = () => {
   const [currentCase, setCurrentCase] = useState<any>(null);
@@ -29,7 +32,7 @@ const CaseDrawer: React.FC = () => {
       await window.electronAPI.closeCase(activeCase.id);
       setMessage('Case closed successfully!');
       setCurrentCase(null);
-      setTimeout(() => setMessage(''), 3000);
+      setTimeout(() => setMessage(''), MESSAGE_DISPLAY_DURATION_MS);
     } catch (error: any) {
       setMessage(`Error: ${error.message}`);
     } finally {
@@ -191,7 +194,7 @@ const CaseDrawer: React.FC = () => {
       setCaseType('');
       setDescription('');
 
-      setTimeout(() => setMessage(''), 3000);
+      setTimeout(() => setMessage(''), MESSAGE_DISPLAY_DURATION_MS);
     } catch (error: any) {
       setMessage(`Error: ${error.message}`);
     } finally {
@@ -203,7 +206,7 @@ const CaseDrawer: React.FC = () => {
     if (currentCase) {
       await window.electronAPI.copyToClipboard(currentCase.case_number);
       setMessage('Case ID copied!');
-      setTimeout(() => setMessage(''), 2000);
+      setTimeout(() => setMessage(''), COPY_MESSAGE_DURATION_MS);
     }
   };
 
@@ -242,7 +245,7 @@ const CaseDrawer: React.FC = () => {
   const syncErrors: string[] = syncStatus?.lastSyncErrors || [];
   const conflictCount = syncErrors.filter((error) => {
     const normalized = error.toLowerCase();
-    return normalized.includes('conflict') || normalized.includes('409');
+    return CONFLICT_KEYWORDS.some((keyword) => normalized.includes(keyword));
   }).length;
   const syncIntervalMs = syncStatus?.syncIntervalMs ?? DEFAULT_SYNC_INTERVAL_MS;
   const lastSyncLabel = syncStatus?.lastSyncTime
