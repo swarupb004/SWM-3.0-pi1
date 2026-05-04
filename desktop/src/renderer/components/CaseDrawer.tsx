@@ -1,8 +1,10 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import './CaseDrawer.css';
 
+const DEFAULT_SYNC_INTERVAL_MS = 5 * 60 * 1000;
+const STATUS_REFRESH_INTERVAL_MS = 30 * 1000;
+
 const CaseDrawer: React.FC = () => {
-  const defaultSyncIntervalMs = 5 * 60 * 1000;
   const [currentCase, setCurrentCase] = useState<any>(null);
   const [caseNumber, setCaseNumber] = useState('');
   const [customerName, setCustomerName] = useState('');
@@ -17,6 +19,23 @@ const CaseDrawer: React.FC = () => {
   const [loginElapsed, setLoginElapsed] = useState<number>(0);
   const [breakElapsed, setBreakElapsed] = useState<number>(0);
   const currentCaseRef = useRef<any>(null);
+
+  const handleCloseCase = useCallback(async () => {
+    const activeCase = currentCaseRef.current;
+    if (!activeCase) return;
+
+    setIsLoading(true);
+    try {
+      await window.electronAPI.closeCase(activeCase.id);
+      setMessage('Case closed successfully!');
+      setCurrentCase(null);
+      setTimeout(() => setMessage(''), 3000);
+    } catch (error: any) {
+      setMessage(`Error: ${error.message}`);
+    } finally {
+      setIsLoading(false);
+    }
+  }, []);
 
   useEffect(() => {
     loadCurrentCase();
@@ -38,7 +57,7 @@ const CaseDrawer: React.FC = () => {
     const refreshInterval = setInterval(() => {
       loadAttendance();
       loadSyncStatus();
-    }, 30000);
+    }, STATUS_REFRESH_INTERVAL_MS);
 
     return () => {
       removeListener();
@@ -180,22 +199,6 @@ const CaseDrawer: React.FC = () => {
     }
   };
 
-  const handleCloseCase = async () => {
-    if (!currentCase) return;
-
-    setIsLoading(true);
-    try {
-      await window.electronAPI.closeCase(currentCase.id);
-      setMessage('Case closed successfully!');
-      setCurrentCase(null);
-      setTimeout(() => setMessage(''), 3000);
-    } catch (error: any) {
-      setMessage(`Error: ${error.message}`);
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
   const handleCopyCaseId = async () => {
     if (currentCase) {
       await window.electronAPI.copyToClipboard(currentCase.case_number);
@@ -241,7 +244,7 @@ const CaseDrawer: React.FC = () => {
     const normalized = error.toLowerCase();
     return normalized.includes('conflict') || normalized.includes('409');
   }).length;
-  const syncIntervalMs = syncStatus?.syncIntervalMs ?? defaultSyncIntervalMs;
+  const syncIntervalMs = syncStatus?.syncIntervalMs ?? DEFAULT_SYNC_INTERVAL_MS;
   const lastSyncLabel = syncStatus?.lastSyncTime
     ? new Date(syncStatus.lastSyncTime).toLocaleTimeString()
     : 'Never';

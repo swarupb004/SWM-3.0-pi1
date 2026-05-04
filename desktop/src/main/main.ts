@@ -28,6 +28,8 @@ let tray: Tray | null = null;
 let dbManager: DatabaseManager;
 let syncManager: SyncManager;
 let isQuitting = false;
+const DRAWER_WIDTH = 400;
+const DRAWER_HEIGHT = 300;
 
 // Get OneDrive path or fallback to local AppData
 function getStoragePath(): string {
@@ -73,11 +75,9 @@ function createMainWindow() {
 }
 
 function createDrawerWindow() {
-  const drawerWidth = 400;
-  const drawerHeight = 300;
   drawerWindow = new BrowserWindow({
-    width: drawerWidth,
-    height: drawerHeight,
+    width: DRAWER_WIDTH,
+    height: DRAWER_HEIGHT,
     frame: false,
     transparent: false,
     alwaysOnTop: true,
@@ -93,7 +93,7 @@ function createDrawerWindow() {
   // Position at center-top
   const primaryDisplay = screen.getPrimaryDisplay();
   const { width, x: workAreaX, y: workAreaY } = primaryDisplay.workArea;
-  drawerWindow.setPosition(Math.floor(workAreaX + (width - drawerWidth) / 2), workAreaY);
+  drawerWindow.setPosition(Math.floor(workAreaX + (width - DRAWER_WIDTH) / 2), workAreaY);
 
   if (process.env.NODE_ENV === 'development') {
     drawerWindow.loadURL('http://localhost:5173/#/drawer');
