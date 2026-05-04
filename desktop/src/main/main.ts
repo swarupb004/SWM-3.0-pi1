@@ -92,8 +92,8 @@ function createDrawerWindow() {
 
   // Position at center-top
   const primaryDisplay = screen.getPrimaryDisplay();
-  const { width, x, y } = primaryDisplay.workArea;
-  drawerWindow.setPosition(Math.floor(x + (width - drawerWidth) / 2), y);
+  const { width, x: workAreaX, y: workAreaY } = primaryDisplay.workArea;
+  drawerWindow.setPosition(Math.floor(workAreaX + (width - drawerWidth) / 2), workAreaY);
 
   if (process.env.NODE_ENV === 'development') {
     drawerWindow.loadURL('http://localhost:5173/#/drawer');

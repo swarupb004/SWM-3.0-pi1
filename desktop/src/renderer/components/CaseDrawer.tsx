@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import './CaseDrawer.css';
 
 const CaseDrawer: React.FC = () => {
-  const syncIntervalMs = 5 * 60 * 1000;
+  const defaultSyncIntervalMs = 5 * 60 * 1000;
   const [currentCase, setCurrentCase] = useState<any>(null);
   const [caseNumber, setCaseNumber] = useState('');
   const [customerName, setCustomerName] = useState('');
@@ -241,6 +241,7 @@ const CaseDrawer: React.FC = () => {
     const normalized = error.toLowerCase();
     return normalized.includes('conflict') || normalized.includes('409');
   }).length;
+  const syncIntervalMs = syncStatus?.syncIntervalMs ?? defaultSyncIntervalMs;
   const lastSyncLabel = syncStatus?.lastSyncTime
     ? new Date(syncStatus.lastSyncTime).toLocaleTimeString()
     : 'Never';
